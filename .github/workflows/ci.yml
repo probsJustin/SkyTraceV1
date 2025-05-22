@@ -1,0 +1,235 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DATABASE_URL: postgresql://skytrace:skytrace_test@localhost:5432/skytrace_test
+  ENVIRONMENT: test
+  LOG_LEVEL: INFO
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgis/postgis:15-3.3
+        env:
+          POSTGRES_PASSWORD: skytrace_test
+          POSTGRES_USER: skytrace
+          POSTGRES_DB: skytrace_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install Python dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Wait for PostgreSQL
+      run: |
+        until pg_isready -h localhost -p 5432 -U skytrace; do
+          echo "Waiting for PostgreSQL..."
+          sleep 2
+        done
+
+    - name: Initialize test database
+      run: |
+        cd backend
+        PGPASSWORD=skytrace_test psql -h localhost -U skytrace -d skytrace_test -f sql/init.sql
+
+    - name: Run backend linting
+      run: |
+        cd backend
+        flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Run backend type checking
+      run: |
+        cd backend
+        # Skip mypy for now, can be added later
+        echo "Type checking placeholder - add mypy when ready"
+
+    - name: Run backend unit tests
+      run: |
+        cd backend
+        python -m pytest tests/ -v --tb=short --disable-warnings
+      env:
+        DATABASE_URL: ${{ env.DATABASE_URL }}
+
+    - name: Run backend integration tests
+      run: |
+        cd backend
+        python -m pytest tests/integration/ -v --tb=short --disable-warnings
+      env:
+        DATABASE_URL: ${{ env.DATABASE_URL }}
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: Run frontend linting
+      run: |
+        cd frontend
+        npm run lint || echo "ESLint not configured yet"
+
+    - name: Run frontend type checking
+      run: |
+        cd frontend
+        npx tsc --noEmit
+
+    - name: Run frontend unit tests
+      run: |
+        cd frontend
+        npm test -- --coverage --watchAll=false
+
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build backend Docker image
+      run: |
+        docker build -t skytrace-backend:test ./backend
+
+    - name: Build frontend Docker image
+      run: |
+        docker build -t skytrace-frontend:test ./frontend
+
+    - name: Test Docker Compose setup
+      run: |
+        # Test that docker-compose file is valid
+        docker-compose config
+
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install code quality tools
+      run: |
+        pip install black isort bandit safety
+
+    - name: Check Python code formatting
+      run: |
+        cd backend
+        black --check app/ tests/
+
+    - name: Check Python import sorting
+      run: |
+        cd backend
+        isort --check-only app/ tests/
+
+    - name: Run security checks
+      run: |
+        cd backend
+        bandit -r app/ -f json -o bandit-results.json || true
+        safety check --json --output safety-results.json || true
+
+  notification:
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend, docker-build, security-scan, code-quality]
+    if: always()
+    
+    steps:
+    - name: Notify on success
+      if: ${{ needs.test-backend.result == 'success' && needs.test-frontend.result == 'success' }}
+      run: |
+        echo "✅ All tests passed successfully!"
+        echo "Backend tests: ${{ needs.test-backend.result }}"
+        echo "Frontend tests: ${{ needs.test-frontend.result }}"
+        echo "Docker build: ${{ needs.docker-build.result }}"
+        echo "Security scan: ${{ needs.security-scan.result }}"
+        echo "Code quality: ${{ needs.code-quality.result }}"
+
+    - name: Notify on failure
+      if: ${{ needs.test-backend.result == 'failure' || needs.test-frontend.result == 'failure' }}
+      run: |
+        echo "❌ Some tests failed!"
+        echo "Backend tests: ${{ needs.test-backend.result }}"
+        echo "Frontend tests: ${{ needs.test-frontend.result }}"
+        echo "Docker build: ${{ needs.docker-build.result }}"
+        echo "Security scan: ${{ needs.security-scan.result }}"
+        echo "Code quality: ${{ needs.code-quality.result }}"
+        exit 1

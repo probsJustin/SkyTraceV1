@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: skytrace_db
+    environment:
+      POSTGRES_DB: skytrace
+      POSTGRES_USER: skytrace
+      POSTGRES_PASSWORD: skytrace_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skytrace -d skytrace"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: skytrace_backend
+    environment:
+      DATABASE_URL: postgresql://skytrace:skytrace_dev@db:5432/skytrace
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build: ./frontend
+    container_name: skytrace_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    command: npm start
+
+volumes:
+  postgres_data:
