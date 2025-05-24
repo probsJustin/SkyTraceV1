@@ -1,18 +1,24 @@
 import React from 'react';
-import { MapProvider } from './components/MapProvider';
-import { MapView } from './components/MapView';
-import { LayerPanel } from './components/LayerPanel';
+import { MapProvider, MapProviderErrorBoundary } from './components/MapProvider';
+import { MapView, MapViewErrorBoundary } from './components/MapView';
+import { LayerPanel, LayerPanelErrorBoundary } from './components/LayerPanel';
 import './App.css';
 
 function App() {
   return (
     <div className="App">
-      <MapProvider>
-        <div className="app-container">
-          <LayerPanel />
-          <MapView />
-        </div>
-      </MapProvider>
+      <MapProviderErrorBoundary>
+        <MapProvider>
+          <div className="app-container">
+            <LayerPanelErrorBoundary>
+              <LayerPanel />
+            </LayerPanelErrorBoundary>
+            <MapViewErrorBoundary>
+              <MapView />
+            </MapViewErrorBoundary>
+          </div>
+        </MapProvider>
+      </MapProviderErrorBoundary>
     </div>
   );
 }

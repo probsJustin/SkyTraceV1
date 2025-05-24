@@ -3,12 +3,13 @@ Main API router configuration
 """
 from fastapi import APIRouter
 
-from app.api.endpoints import aircraft, tenants, feature_flags, data_sources, map_layers, scheduler
+from app.api.endpoints import aircraft, tenants, feature_flags, data_sources, map_layers, scheduler, airspace
 
 api_router = APIRouter()
 
 # Include endpoint routers
 api_router.include_router(aircraft.router, prefix="/aircraft", tags=["Aircraft"])
+api_router.include_router(airspace.router, prefix="/airspace", tags=["Airspace"])
 api_router.include_router(tenants.router, prefix="/tenants", tags=["Tenants"])
 api_router.include_router(feature_flags.router, prefix="/feature-flags", tags=["Feature Flags"])
 api_router.include_router(data_sources.router, prefix="/data-sources", tags=["Data Sources"])

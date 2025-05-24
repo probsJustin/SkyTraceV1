@@ -1,0 +1,150 @@
+/* Emergency aircraft pulsing animation */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Apply pulsing to emergency aircraft icons */
+.maplibregl-marker[data-emergency="true"] {
+  animation: pulse 1.5s infinite;
+}
+
+/* Map legend styles */
+.map-legend {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 12px;
+  max-width: 250px;
+  z-index: 1000;
+}
+
+.legend-header {
+  font-weight: bold;
+  margin-bottom: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.legend-content {
+  display: block;
+}
+
+.legend-content.collapsed {
+  display: none;
+}
+
+.legend-section {
+  margin-bottom: 8px;
+}
+
+.legend-section h4 {
+  margin: 0 0 4px 0;
+  font-size: 11px;
+  font-weight: bold;
+  color: #555;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+  gap: 6px;
+}
+
+.legend-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.legend-text {
+  font-size: 10px;
+  color: #333;
+}
+
+/* Toggle button */
+.legend-toggle {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+/* Map container */
+.map-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Aircraft popup */
+.aircraft-popup {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 6px 8px;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 4px;
+  max-width: 150px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.aircraft-popup-header {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.aircraft-popup-emergency {
+  color: #ffff00;
+  font-weight: bold;
+}
+
+/* Loading indicator */
+.map-loading-indicator {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Aircraft counter */
+.aircraft-counter {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}

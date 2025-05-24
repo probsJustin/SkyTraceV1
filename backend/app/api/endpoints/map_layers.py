@@ -32,14 +32,18 @@ async def get_map_layers(
     session: AsyncSession = Depends(get_async_session),
 ):
     """Get all map layers for default tenant"""
-    tenant = await get_default_tenant(session)
-    
-    result = await session.execute(
-        select(MapLayerModel).where(MapLayerModel.tenant_id == tenant.id)
-        .order_by(MapLayerModel.z_index)
-    )
-    layers = result.scalars().all()
-    return [MapLayer.model_validate(layer) for layer in layers]
+    try:
+        tenant = await get_default_tenant(session)
+        
+        result = await session.execute(
+            select(MapLayerModel).where(MapLayerModel.tenant_id == tenant.id)
+            .order_by(MapLayerModel.z_index)
+        )
+        layers = result.scalars().all()
+        return [MapLayer.model_validate(layer) for layer in layers]
+    except HTTPException:
+        # If no default tenant, return empty list instead of hanging
+        return []
 
 
 @router.post("/", response_model=MapLayer)

@@ -8,7 +8,22 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
 });
+
+// Airspace API
+export const airspaceApi = {
+  getAirspaceGeoJSON: async (limit?: number): Promise<any> => {
+    const params = limit ? { limit } : {};
+    const response = await api.get('/airspace/geojson', { params });
+    return response.data;
+  },
+
+  getAirspaceTypes: async (): Promise<any> => {
+    const response = await api.get('/airspace/types');
+    return response.data;
+  },
+};
 
 // Aircraft API
 export const aircraftApi = {

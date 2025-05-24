@@ -9,6 +9,7 @@ pydantic==2.5.0
 pydantic-settings==2.1.0
 python-multipart==0.0.6
 httpx==0.25.2
+aiohttp==3.9.0
 celery==5.3.4
 redis==5.0.1
 structlog==23.2.0

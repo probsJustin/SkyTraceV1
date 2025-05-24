@@ -1,0 +1,98 @@
+.aircraft-legend {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-width: 280px;
+  max-width: 320px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.aircraft-legend-header {
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.aircraft-legend-header.expanded {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.aircraft-legend-title {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.aircraft-legend-toggle {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.aircraft-legend-content {
+  padding: 12px 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.aircraft-legend-section-header {
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #ffeb3b;
+  border-bottom: 1px solid rgba(255, 235, 59, 0.3);
+  padding-bottom: 4px;
+}
+
+.aircraft-legend-section-header:not(:first-child) {
+  margin-top: 16px;
+}
+
+.aircraft-legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.aircraft-legend-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.aircraft-legend-icon {
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.aircraft-legend-label {
+  font-weight: 500;
+}
+
+.aircraft-legend-description {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.aircraft-legend-feature {
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.aircraft-legend-feature-label {
+  font-weight: 500;
+}
+
+.aircraft-legend-feature-description {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-left: 8px;
+}
